@@ -1,36 +1,52 @@
+pub mod args;
 pub mod game;
 
 
-#[derive(Debug, Clone, clap::ValueEnum)]
+#[derive(Debug, Clone)]
 pub enum CellType {
-	Big,
-	Small,
-	Braille,
+    Big,
+    Small,
+    Braille,
 }
 
 
+pub fn print_full_help() {
+    println!("\x1b[1mCLI Game of Life screensaver\x1b[0m");
+    println!();
+    println!("\x1b[1mUsage:\x1b[0m");
+    println!("  goool [-c | --cell-type <cell type>] [-d | --delay <time in ms>] [--alive-color <rgb in hex>] [--dead-color <rgb in hex>]");
+    println!();
+    println!("\x1b[1mOptions:\x1b[0m");
+    println!("  -c, --cell-type     Cell size.");
+    println!("                        'big'     - 2 characters per cell.");
+    println!("                        'small'   - 2 cells in 1 character.");
+    println!("                        'braille' - 8 cells in 1 character.");
+    println!("  -d, --delay         Delay between updates in milliseconds.");
+    println!("  -ac, --alive-color  Color of alive cells (e.g. e7c27d, 8a8)");
+    println!("  -dc, --dead-color   Color of alive cells (e.g. 182020, 000)");
 
+}
 
-pub fn color_from_hex(s: &str) -> Option<(u8, u8, u8)> {
-	let s = s.trim_matches('#');
+pub fn color_from_hex(s: &str) -> Result<(u8, u8, u8), String> {
+    let s = s.trim_matches('#');
 
-	match s.len() {
-		6 => {
-			let r = u8::from_str_radix(&s[0..=1], 16).ok()?;
-			let g = u8::from_str_radix(&s[2..=3], 16).ok()?;
-			let b = u8::from_str_radix(&s[4..=5], 16).ok()?;
+    match s.len() {
+        6 => {
+            let r = u8::from_str_radix(&s[0..=1], 16).map_err(|e| e.to_string())?;
+            let g = u8::from_str_radix(&s[2..=3], 16).map_err(|e| e.to_string())?;
+            let b = u8::from_str_radix(&s[4..=5], 16).map_err(|e| e.to_string())?;
 
-			Some((r, g, b))
-		},
-		3 => {
-			let r = u8::from_str_radix(&s[0..=0], 16).ok()? << 4;
-			let g = u8::from_str_radix(&s[1..=1], 16).ok()? << 4;
-			let b = u8::from_str_radix(&s[2..=2], 16).ok()? << 4;
+            Ok((r, g, b))
+        },
+        3 => {
+            let r = u8::from_str_radix(&s[0..=0], 16).map_err(|e| e.to_string())? << 4;
+            let g = u8::from_str_radix(&s[1..=1], 16).map_err(|e| e.to_string())? << 4;
+            let b = u8::from_str_radix(&s[2..=2], 16).map_err(|e| e.to_string())? << 4;
 
-			Some((r, g, b))
-		},
-		_ => None,
-	}
+            Ok((r, g, b))
+        },
+        _ => Err(format!("Invalid hex color: '{}'", s)),
+    }
 
 }
 
